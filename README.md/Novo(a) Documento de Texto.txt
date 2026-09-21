@@ -1,0 +1,62 @@
+
+  API de Jogos
+
+   Tema
+
+API para cadastro e gerenciamento de jogos.
+
+   Objetivo
+
+Desenvolver uma Minimal API utilizando ASP.NET Core e .NET 10 para realizar operações de cadastro, consulta, atualizacão e remocão de jogos.
+
+ Tecnologias utilizadas
+
+  C#
+  ASP.NET Core
+  .NET 10
+  Minimal API
+  Bruno
+
+ Como executar
+
+No terminal, dentro da pasta do projeto, execute:
+
+dotnet run --urls http://localhost:5050
+
+A API ficará disponível em:
+
+http://localhost:5050
+
+Para verificar se a API está funcionando, acesse:
+
+http://localhost:5050/
+
+ Como testar
+
+A Collection do Bruno está localizada na pasta:
+
+bruno/Apijogos
+
+ Endpoints
+
+ Método | Endpoint | Descrição | Status 
+
+ GET | / | Verificar se a API está funcionando | 200 
+ GET | /api/jogos | Listar todos os jogos | 200 
+ GET | /api/jogos/{id} | Buscar jogo por ID | 200 ou 404 
+ POST | /api/jogos | Cadastrar um novo jogo | 201 
+ PUT | /api/jogos/{id} | Atualizar um jogo | 200 ou 404 
+ DELETE | /api/jogos/{id} | Remover um jogo | 204 ou 404 
+
+ Exemplo de cadastro
+ POST /api/jogos
+
+json
+{
+  "nome": "GTA V",
+  "genero": "Ação",
+  "ano": 2013
+}
+
+link do vídeo
+https://drive.google.com/file/d/1iEoR3-XO6usu380EoZsKgc366s5Cm4lU/view?usp=sharing
