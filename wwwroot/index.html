@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API de Jogos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 16px;
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        h1 { color: #1d4ed8; }
+
+        section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            display: block;
+            width: 95%;
+            padding: 10px;
+            margin: 8px 0 15px;
+        }
+
+        button {
+            padding: 9px 12px;
+            margin: 3px;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        #mensagem { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>API de Jogos</h1>
+
+    <section>
+        <h2 id="titulo">Cadastrar jogo</h2>
+
+        <form id="formulario">
+            <label for="nome">Nome</label>
+            <input id="nome" required>
+
+            <label for="genero">Gênero</label>
+            <input id="genero" required>
+
+            <label for="ano">Ano</label>
+            <input id="ano" type="number" min="1" max="9999" required>
+
+            <button type="submit" id="salvar">Cadastrar jogo</button>
+            <button type="button" id="cancelar" hidden>Cancelar edição</button>
+        </form>
+
+        <p id="mensagem" role="status">Carregando jogos...</p>
+    </section>
+
+    <section>
+        <h2>Jogos cadastrados</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Gênero</th>
+                    <th>Ano</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="lista"></tbody>
+        </table>
+    </section>
+
+    <script>
+        const API = "/api/jogos";
+
+        const formulario = document.getElementById("formulario");
+        const lista = document.getElementById("lista");
+        const mensagem = document.getElementById("mensagem");
+        const nome = document.getElementById("nome");
+        const genero = document.getElementById("genero");
+        const ano = document.getElementById("ano");
+
+        let jogos = [];
+        let idEdicao = null;
+
+        function informar(texto, erro = false) {
+            mensagem.textContent = texto;
+            mensagem.style.color = erro ? "red" : "green";
+        }
+
+        async function carregarJogos() {
+            try {
+                const resposta = await fetch(API);
+
+                if (!resposta.ok) {
+                    throw new Error("Erro ao consultar a API: " + resposta.status);
+                }
+
+                jogos = await resposta.json();
+                lista.replaceChildren();
+
+                if (jogos.length === 0) {
+                    const linha = lista.insertRow();
+                    const celula = linha.insertCell();
+                    celula.colSpan = 5;
+                    celula.textContent = "Nenhum jogo cadastrado.";
+                    return;
+                }
+
+                jogos.forEach(jogo => {
+                    const id = jogo.id ?? jogo.Id;
+                    const nomeJogo = jogo.nome ?? jogo.Nome;
+                    const generoJogo = jogo.genero ?? jogo.Genero;
+                    const anoJogo = jogo.ano ?? jogo.Ano;
+
+                    const linha = lista.insertRow();
+
+                    [id, nomeJogo, generoJogo, anoJogo].forEach(valor => {
+                        linha.insertCell().textContent = valor;
+                    });
+
+                    const acoes = linha.insertCell();
+
+                    const editar = document.createElement("button");
+                    editar.textContent = "Editar";
+                    editar.onclick = () => iniciarEdicao(id);
+
+                    const excluir = document.createElement("button");
+                    excluir.textContent = "Excluir";
+                    excluir.onclick = () => excluirJogo(id);
+
+                    acoes.append(editar, excluir);
+                });
+            } catch (erro) {
+                informar(erro.message, true);
+            }
+        }
+
+        formulario.addEventListener("submit", async evento => {
+            evento.preventDefault();
+
+            const dados = {
+                nome: nome.value.trim(),
+                genero: genero.value.trim(),
+                ano: Number(ano.value)
+            };
+
+            const editando = idEdicao !== null;
+            const url = editando ? `${API}/${idEdicao}` : API;
+
+            try {
+                const resposta = await fetch(url, {
+                    method: editando ? "PUT" : "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(dados)
+                });
+
+                if (!resposta.ok) {
+                    throw new Error("Não foi possível salvar: HTTP " + resposta.status);
+                }
+
+                limparFormulario();
+                await carregarJogos();
+                informar(editando ? "Jogo atualizado!" : "Jogo cadastrado!");
+            } catch (erro) {
+                informar(erro.message, true);
+            }
+        });
+
+        function iniciarEdicao(id) {
+            const jogo = jogos.find(item => (item.id ?? item.Id) === id);
+
+            if (!jogo) return;
+
+            idEdicao = id;
+            nome.value = jogo.nome ?? jogo.Nome;
+            genero.value = jogo.genero ?? jogo.Genero;
+            ano.value = jogo.ano ?? jogo.Ano;
+
+            document.getElementById("titulo").textContent = "Editar jogo";
+            document.getElementById("salvar").textContent = "Salvar alterações";
+            document.getElementById("cancelar").hidden = false;
+        }
+
+        async function excluirJogo(id) {
+            if (!confirm("Deseja excluir este jogo?")) return;
+
+            try {
+                const resposta = await fetch(`${API}/${id}`, {
+                    method: "DELETE"
+                });
+
+                if (!resposta.ok) {
+                    throw new Error("Não foi possível excluir: HTTP " + resposta.status);
+                }
+
+                if (idEdicao === id) limparFormulario();
+
+                await carregarJogos();
+                informar("Jogo excluído!");
+            } catch (erro) {
+                informar(erro.message, true);
+            }
+        }
+
+        function limparFormulario() {
+            formulario.reset();
+            idEdicao = null;
+            document.getElementById("titulo").textContent = "Cadastrar jogo";
+            document.getElementById("salvar").textContent = "Cadastrar jogo";
+            document.getElementById("cancelar").hidden = true;
+        }
+
+        document.getElementById("cancelar").onclick = limparFormulario;
+
+        carregarJogos();
+    </script>
+</body>
+</html>

@@ -1,26 +1,32 @@
+using ApiJogos.Data;
+using ApiJogos.Models;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<JogosDbContext>(options =>
+    options.UseSqlite("Data Source=jogos.db"));
 
 var app = builder.Build();
 
-List<Jogo> jogos = new List<Jogo>
-{
-    new Jogo(1, "Minecraft", "Sandbox", 2011),
-    new Jogo(2, "FIFA 25", "Esportes", 2024)
-};
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 app.MapGet("/", () =>
 {
-    return "API de Jogos está funcionando!";
+    return Results.Text("API de Jogos está funcionando!");
 });
 
-app.MapGet("/api/jogos", () =>
+app.MapGet("/api/jogos", (JogosDbContext db) =>
 {
+    var jogos = db.Jogos.AsNoTracking().ToList();
+
     return Results.Ok(jogos);
 });
 
-app.MapGet("/api/jogos/{id}", (int id) =>
+app.MapGet("/api/jogos/{id:int}", IResult (int id, JogosDbContext db) =>
 {
-    var jogo = jogos.FirstOrDefault(j => j.Id == id);
+    var jogo = db.Jogos.Find(id);
 
     if (jogo == null)
     {
@@ -30,68 +36,52 @@ app.MapGet("/api/jogos/{id}", (int id) =>
     return Results.Ok(jogo);
 });
 
-app.MapPost("/api/jogos", (JogoEntrada entrada) =>
+app.MapPost("/api/jogos", (JogoEntrada entrada, JogosDbContext db) =>
 {
-    int novoId = jogos.Count > 0 ? jogos.Max(j => j.Id) + 1 : 1;
+    var jogo = new Jogo
+    {
+        Nome = entrada.Nome,
+        Genero = entrada.Genero,
+        Ano = entrada.Ano
+    };
 
-    var jogo = new Jogo(
-        novoId,
-        entrada.Nome,
-        entrada.Genero,
-        entrada.Ano
-    );
-
-    jogos.Add(jogo);
+    db.Jogos.Add(jogo);
+    db.SaveChanges();
 
     return Results.Created($"/api/jogos/{jogo.Id}", jogo);
 });
 
-app.MapPut("/api/jogos/{id}", (int id, JogoEntrada entrada) =>
+app.MapPut("/api/jogos/{id:int}", IResult (int id, JogoEntrada entrada, JogosDbContext db) =>
 {
-    var indice = jogos.FindIndex(j => j.Id == id);
-
-    if (indice == -1)
-    {
-        return Results.NotFound();
-    }
-
-    var jogoAtualizado = new Jogo(
-        id,
-        entrada.Nome,
-        entrada.Genero,
-        entrada.Ano
-    );
-
-    jogos[indice] = jogoAtualizado;
-
-    return Results.Ok(jogoAtualizado);
-});
-
-app.MapDelete("/api/jogos/{id}", (int id) =>
-{
-    var jogo = jogos.FirstOrDefault(j => j.Id == id);
+    var jogo = db.Jogos.Find(id);
 
     if (jogo == null)
     {
         return Results.NotFound();
     }
 
-    jogos.Remove(jogo);
+    jogo.Nome = entrada.Nome;
+    jogo.Genero = entrada.Genero;
+    jogo.Ano = entrada.Ano;
+
+    db.SaveChanges();
+
+    return Results.Ok(jogo);
+});
+
+app.MapDelete("/api/jogos/{id:int}", IResult (int id, JogosDbContext db) =>
+{
+    var jogo = db.Jogos.Find(id);
+
+    if (jogo == null)
+    {
+        return Results.NotFound();
+    }
+
+    db.Jogos.Remove(jogo);
+    db.SaveChanges();
 
     return Results.NoContent();
 });
 
 app.Run("http://localhost:5050");
-
-public record Jogo(
-    int Id,
-    string Nome,
-    string Genero,
-    int Ano
-);
-
-public record JogoEntrada(
-    string Nome,
-    string Genero,
-    int Ano
-);
