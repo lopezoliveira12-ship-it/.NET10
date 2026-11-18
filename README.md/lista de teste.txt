@@ -1,7 +1,0 @@
-Teste	Método	URL
-API no ar	GET	http://localhost:5050/
-Listar jogos	GET	http://localhost:5050/api/jogos
-Buscar por ID	GET	http://localhost:5050/api/jogos/1
-Cadastrar jogo	POST	http://localhost:5050/api/jogos
-Atualizar jogo	PUT	http://localhost:5050/api/jogos/4
-Excluir jogo	DELETE	http://localhost:5050/api/jogos/4

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ApiJogos")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2a0036f327eb1249510787cc33cc838fe3fc2de1")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e0f9ea172728afec9dd05968e3b59cb66eaf76f2")]
 [assembly: System.Reflection.AssemblyProductAttribute("ApiJogos")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ApiJogos")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
